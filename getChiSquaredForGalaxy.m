@@ -1,7 +1,12 @@
-function chiSquared = getChiSquaredForGalaxy(rotationCurveData,a0)
+function chiSquared = getChiSquaredForGalaxy(rotationCurveData,a0,interpolationFunction)
+
+% Default value for interpolationFunction:
+if nargin < 3
+    interpolationFunction = 'linear';
+end
 
 % Calculate MOND velocities:
-[~, MONDVelocities] = calculateMONDVelocitiesForGalaxy(rotationCurveData,a0);
+[~, MONDVelocities] = calculateMONDVelocitiesForGalaxy(rotationCurveData,a0,interpolationFunction);
 
 % Get observed velocities:
 observedVelocities = rotationCurveData(:,2);        % in km/s

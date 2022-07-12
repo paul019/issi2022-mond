@@ -1,4 +1,9 @@
-function [a0Values, chiSquared, galaxies] = findBestA0ForAllGalaxies(a0Min,a0Step,a0Max,cleanFlag)
+function [a0Values, chiSquared, galaxies] = findBestA0ForAllGalaxies(a0Min,a0Step,a0Max,cleanFlag,interpolationFunction)
+
+% Default value for interpolationFunction:
+if nargin < 5
+    interpolationFunction = 'linear';
+end
 
 % Import the names and metadata of all galaxies from the SPARC database:
 [galaxyNames,galaxyData] = ReadLelliC;
@@ -32,7 +37,7 @@ for jj = 1:numOfGalaxies
 
         % Calculating chi squared for the current combination of a0 and a
         % galaxy:
-        chiSquared(ii,jj) = getChiSquaredForGalaxy(galaxies{jj}.rotationCurveData, a0Values(ii));
+        chiSquared(ii,jj) = getChiSquaredForGalaxy(galaxies{jj}.rotationCurveData, a0Values(ii), interpolationFunction);
     end
 
     % Each galaxy gets a vector with chi squared for every value of a0:
@@ -106,10 +111,8 @@ ylabel '\chi^2';
 title('MSWD (\chi^2) vs a_0');
 grid on;
 
-if ~cleanFlag
-    txt = strcat('a_0 = ', sprintf('%d', bestA0Mean), ' km/s^2; \chi^2 = ', sprintf('%d', chiSquaredMeanMin), ' km^2/s^2');
-    annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w');
-end
+txt = strcat('a_0 = ', sprintf('%d', bestA0Mean), ' km/s^2; \chi^2 = ', sprintf('%d', chiSquaredMeanMin));
+annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w');
 
 % Draw one curve for each inidividual galaxy:
 if ~cleanFlag
