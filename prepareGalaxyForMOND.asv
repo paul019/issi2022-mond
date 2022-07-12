@@ -74,8 +74,7 @@ end
     % 11 total baryonic velocity (calculated) in km/s
     rotationCurveData(:,11) = sqrt(abs(Vgas).*Vgas+MtoLdisk*abs(Vdisk).*Vdisk+bulgeFlag*MtoLbulge*abs(Vbulge).*Vbulge);
 
-% Delete rows where the total baryonic velocity is zero or has an
-% imaginary component:
+% Delete rows where the total baryonic velocity has an imaginary component:
 ii = 1;
 dataSize = size(rotationCurveData);
 dataLength = dataSize(1);
@@ -87,5 +86,7 @@ while ii <= dataLength
         ii = ii + 1;
     end
 end
+
+
 
 end

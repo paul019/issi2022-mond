@@ -34,7 +34,7 @@ a0 = 1.37637848537386E-13;   %1.40E-13 / 1.20E-13
 
 kpcInKm=3.086*10^16;
 
-VbaryonReal = power((Vbaryon.^2).*r*(kpcInKm*(a0)),0.25); %just a/a0
+VbaryonReal = power((Vbaryon.^2).*r*(kpcInKm*(a0)),0.25); %just a/a0 (linear)
 Vreal1 = sqrt(((Vbaryon.^2) + sqrt((Vbaryon.^4) + 4*(Vbaryon.^2).* a0.*r*kpcInKm))/2) %simple interpolating function
 Vreal2 = nthroot(((Vbaryon.^4) + sqrt((Vbaryon.^8) + 4*(Vbaryon.^4).* (a0^2).*(r*kpcInKm).^2))/2 ,4) %standard interpolating function
 
