@@ -1,3 +1,4 @@
+%% IMPORTANT: Before usage, one has to add the folder "BackgroundFunctions" to the MATLAB path!
 %% 
 % The different ReadXXXXX.m files read the data files of SPARC. Some give
 % metadata on the galaxy, some rotation curves. Need to check. In any case,
