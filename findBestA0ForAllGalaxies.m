@@ -106,15 +106,18 @@ ylabel '\chi^2';
 title('MSWD (\chi^2) vs a_0');
 grid on;
 
-txt = strcat('a_0 = ', sprintf('%d', bestA0Mean), ' km/s^2; \chi^2 = ', sprintf('%d', chiSquaredMeanMin), ' km^2/s^2');
-annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w')
+if ~cleanFlag
+    txt = strcat('a_0 = ', sprintf('%d', bestA0Mean), ' km/s^2; \chi^2 = ', sprintf('%d', chiSquaredMeanMin), ' km^2/s^2');
+    annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w');
+end
 
 % Draw one curve for each inidividual galaxy:
+if ~cleanFlag
+    hold on;
 
-hold on;
-
-for jj = 1:numOfGalaxies
-    plot(a0Values, chiSquared(:,jj));
+    for jj = 1:numOfGalaxies
+        plot(a0Values, chiSquared(:,jj));
+    end
 end
 
 %--------------------------------------------------------------------------
