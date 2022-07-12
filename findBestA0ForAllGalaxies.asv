@@ -1,4 +1,4 @@
-function [a0Values, chiSquared, galaxies] = findBestA0ForAllGalaxies(a0Min,a0Step,a0Max,cleanFlag,interpolationFunction,galaxyNames)
+function [a0Values, chiSquared, galaxies] = findBestA0ForAllGalaxies(a0Min,a0Step,a0Max,cleanFlag,interpolationFunction,myGalaxyNames)
 
 % Default value for interpolationFunction:
 if nargin < 5
@@ -6,29 +6,10 @@ if nargin < 5
 end
 
 % Import the names and metadata of all galaxies from the SPARC database:
-[allGalaxyNames,allGalaxyData] = ReadLelliC;
+[allalaxyNames_,galaxyData_] = ReadLelliC;
 
-% Deal with the input argument "galaxyNames":
 if nargin < 6
-    galaxyNames = allGalaxyNames;
-    galaxyData = allGalaxyData;
-else
-    myGalaxyNames = galaxyNames;
-
-    galaxyNames = {};
-    galaxyData = {};
-    index = 1;
-
-    for ii = 1:length(allGalaxyNames)
-        for jj = 1:length(myGalaxyNames)
-            if strcmp(allGalaxyNames{ii}, myGalaxyNames{jj})
-                galaxyNames{index} = allGalaxyNames{ii};
-                galaxyData{index} = allGalaxyData{ii};
-                index = index + 1;
-                break
-            end
-        end
-    end
+    galaxyNames
 end
 
 % Get the number of galaxies:
