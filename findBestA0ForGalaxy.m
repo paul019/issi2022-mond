@@ -1,6 +1,6 @@
 function [a0Values, chiSquaredVector] = findBestA0ForGalaxy(name,a0Min,a0Step,a0Max)
 
-galaxyData = prepareGalaxyForMOND(name,0.5,0.5);
+galaxyData = prepareGalaxyForMOND(name,0.5,0.7);
 
 a0Values = transpose(a0Min:a0Step:a0Max);
 chiSquaredVector = zeros(length(a0Values), 1);

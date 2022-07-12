@@ -18,7 +18,15 @@ switch interpolationFunction
         % RAR approach:
         MONDVelocities=sqrt((real(Vbaryon).^2)./(1-exp(-sqrt((real(Vbaryon).^2)./(r * a0)))));
 
-    % PUT IN MORE INTERPOLATION FUNCTIONS
+    case 'simple'
+        % Simple interpolation curve approach:
+        MONDVelocities=sqrt(((Vbaryon.^2) + sqrt((real(Vbaryon).^4) + 4*(real(Vbaryon).^2).* a0.*r))/2);
+
+    case 'standard'
+        % Standard interpolation curve approach:
+        MONDVelocities=nthroot(((Vbaryon.^4) + sqrt((Vbaryon.^8) + 4*(Vbaryon.^4).* (a0^2).*(r).^2))/2 ,4);
+
+        % PUT IN MORE INTERPOLATION FUNCTIONS
 
     otherwise
         % Linear approach:
