@@ -1,15 +1,15 @@
-function [r, MONDVelocities] = calculateMONDVelocitiesForGalaxy(rotationCurveData,a0,interpolationFunction)
+function [r, MONDVelocities] = calculateMONDVelocitiesForGalaxy(rotationCurveData,a0,interpolationFunctionId)
 
 % Default value for interpolationFunction:
 if nargin < 3
-    interpolationFunction = 'linear';
+    interpolationFunctionId = 'linear';
 end
 
 r = rotationCurveData(:,9);         % in km
 Vbaryon = rotationCurveData(:,11);  % in km/s
 
 % Calculate MOND velocity in km/s:
-switch interpolationFunction
+switch interpolationFunctionId
     case 'linear'
         % Linear approach:
         MONDVelocities = nthroot(abs((Vbaryon.^2).*r*a0),4);
@@ -47,7 +47,7 @@ switch interpolationFunction
         % PUT IN MORE INTERPOLATION FUNCTIONS
 
     otherwise
-        fprintf('There is no interpolation function called ''%s''. Using the linear approach instead.\n', interpolationFunction);
+        fprintf('There is no interpolation function called ''%s''. Using the linear approach instead.\n', interpolationFunctionId);
 
         % Linear approach:
         MONDVelocities = nthroot(abs((Vbaryon.^2).*r*a0),4);
