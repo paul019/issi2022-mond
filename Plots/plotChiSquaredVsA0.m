@@ -1,24 +1,9 @@
-function plotChiSquaredVsA0(a0Values, chiSquared, galaxies, cleanFlag)
+function plotChiSquaredVsA0(galaxyNames, galaxyFittingData, cleanFlag)
+
+[~,galaxyMetadata] = getGalaxyMetadata(galaxyNames);
 
 % Get the number of galaxies:
-numOfGalaxies = length(galaxies);
-
-% Calculate the mean chi squared for every value of a0 by averaging over
-% all galaxies:
-chiSquaredMean = mean(chiSquared,2);
-
-% Get the minimum mean chi squared:
-chiSquaredMeanMin = min(chiSquaredMean);
-
-% Find the index of the minimum mean chi squared in the vector
-% "chiSquaredMean":
-minPos = find(chiSquaredMean == chiSquaredMeanMin);
-
-% Find the best value of a0 for all galaxies:
-bestA0Mean = a0Values(minPos(1));
-
-% Print general findings to the console:
-%fprintf('a_0 = %d; chi^2 = %d km^2/s^2\n', bestA0Mean, chiSquaredMeanMin);
+numOfGalaxies = length(galaxyNames);
 
 %--------------------------------------------------------------------------
 % Prepare figure 1:
@@ -28,17 +13,28 @@ figure('NumberTitle', 'off', 'Name', 'MOND fit');
 % Create a vector with the hubble type of all galaxies:
 hubbleType = zeros(numOfGalaxies,1);
 for jj = 1:numOfGalaxies
-    hubbleType(jj) = galaxies{jj}.hubbleType;
+    hubbleType(jj) = galaxyMetadata{jj}.hubbleType;
 end
 
 % Create a vector with the best a0 value of all galaxies:
 bestA0 = zeros(numOfGalaxies,1);
 for jj = 1:numOfGalaxies
-    bestA0(jj) = galaxies{jj}.bestA0;
+    bestA0(jj) = galaxyFittingData{jj}.bestA0;
 end
 
 % Create a vector with the minimum chi squared for every galaxy:
-chiSquaredMin = transpose(min(chiSquared));
+chiSquaredMin = zeros(numOfGalaxies,1);
+for jj = 1:numOfGalaxies
+    chiSquaredMin(jj) = galaxyFittingData{jj}.chiSquaredMin;
+end
+
+% Create a vector with the chi squared of every galaxy for the best a0
+% overall:
+chiSquaredForBestOverallA0 = zeros(numOfGalaxies,1);
+bestOverallA0_index = galaxyFittingData{end}.bestA0_index;
+for jj = 1:numOfGalaxies
+    chiSquaredForBestOverallA0(jj) = galaxyFittingData{jj}.chiSquared(bestOverallA0_index);
+end
 
 %--------------------------------------------------------------------------
 % Subplot 1 (MSWD (\chi^2) vs a_0)
@@ -48,7 +44,7 @@ if ~cleanFlag
 else
     s = subplot(1,1,1);
 end
-plot(a0Values, chiSquaredMean);
+plot(galaxyFittingData{end}.a0Values, galaxyFittingData{end}.chiSquared);
 
 set(gca,'FontSize',15);
 xlabel 'a_0 [km/s^2]';
@@ -56,7 +52,7 @@ ylabel '\chi^2';
 title('MSWD (\chi^2) vs a_0');
 grid on;
 
-txt = strcat('a_0 = ', sprintf('%d', bestA0Mean), ' km/s^2; \chi^2 = ', sprintf('%d', chiSquaredMeanMin));
+txt = strcat('a_0 = ', sprintf('%d', galaxyFittingData{end}.bestA0), ' km/s^2; \chi^2 = ', sprintf('%d', galaxyFittingData{end}.chiSquaredMin));
 annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w');
 
 % Draw one curve for each inidividual galaxy:
@@ -64,7 +60,7 @@ if ~cleanFlag
     hold on;
 
     for jj = 1:numOfGalaxies
-        plot(a0Values, chiSquared(:,jj));
+        plot(a0Values, galaxyFittingData{jj}.chiSquared);
     end
 end
 
@@ -91,7 +87,7 @@ if ~cleanFlag
     semilogy(hubbleType,chiSquaredMin,'o');
     
     hold on;
-    semilogy(hubbleType,transpose(chiSquared(minPos,:)),'o');
+    semilogy(hubbleType,chiSquaredForBestOverallA0,'o');
     
     set(gca,'FontSize',15);
     xlabel 'Hubble type';
