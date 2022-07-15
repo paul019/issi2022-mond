@@ -1,8 +1,8 @@
-function [galaxyNames, galaxyFittingData] = evaluateGalaxies(a0Min,a0Step,a0Max,interpolationFunction,galaxyNames)
+function [galaxyNames, galaxyFittingData] = evaluateGalaxies(a0Min,a0Step,a0Max,interpolationFunctionId,galaxyNames)
 
 % Default value for interpolationFunction:
 if nargin < 4
-    interpolationFunction = 'linear';
+    interpolationFunctionId = 'linear';
 end
 
 % Import the names and metadata of all galaxies from the SPARC database:
@@ -34,9 +34,13 @@ numOfGalaxies = length(galaxyNames);
 % Create a cell array for all galaxies:
 galaxyFittingData = cell(numOfGalaxies + 1, 1);
 
+% Keep track of the total number of datapoints:
+totalNumberOfDatapoints = 0;
+
 % Iterate through all galaxies in order to get rotation curve data:
 for ii = 1:numOfGalaxies
     galaxyFittingData{ii}.rotationCurveData = prepareGalaxyForMOND(galaxyNames{ii},0.5,0.7);
+    totalNumberOfDatapoints = totalNumberOfDatapoints + length(galaxyFittingData{ii}.rotationCurveData);
 end
 
 % Create a vector with all values of a0 we want to try out:
@@ -54,16 +58,21 @@ for jj = 1:numOfGalaxies
 
         % Calculating chi squared for the current combination of a0 and a
         % galaxy:
-        chiSquared(ii,jj) = getChiSquaredForGalaxy(galaxyFittingData{jj}.rotationCurveData, a0Values(ii), interpolationFunction);
+        chiSquared(ii,jj) = getChiSquaredForGalaxy(galaxyFittingData{jj}.rotationCurveData, a0Values(ii), interpolationFunctionId);
     end
 
     galaxyFittingData{jj}.a0Values = a0Values;
 
+    % Calculate the degrees of freedom:
+    galaxyFittingData{jj}.degreesOfFreedom = length(galaxyFittingData{jj}.rotationCurveData) - 2;
+
     % Each galaxy gets a vector with chi squared for every value of a0:
     galaxyFittingData{jj}.chiSquared = chiSquared(:,jj);
+    galaxyFittingData{jj}.chiSquaredReduced = chiSquared(:,jj) / galaxyFittingData{jj}.degreesOfFreedom;
 
     % Get the minimum chi squared for this galaxy:
     galaxyFittingData{jj}.chiSquaredMin = min(chiSquared(:,jj));
+    galaxyFittingData{jj}.chiSquaredReducedMin = min(chiSquared(:,jj) / galaxyFittingData{jj}.degreesOfFreedom);
 
     % Find the index of the minimum chi squared in the vector
     % "chiSquared":
@@ -84,12 +93,17 @@ jj = numOfGalaxies + 1;
 
 galaxyFittingData{jj}.a0Values = a0Values;
 
+% Calculate the degrees of freedom:
+galaxyFittingData{jj}.degreesOfFreedom = totalNumberOfDatapoints - 2;
+
 % Calculate the mean chi squared for every value of a0 by averaging over
 % all galaxies:
-galaxyFittingData{jj}.chiSquared = mean(chiSquared,2);
+galaxyFittingData{jj}.chiSquared = sum(chiSquared,2);
+galaxyFittingData{jj}.chiSquaredReduced = sum(chiSquared,2) / galaxyFittingData{jj}.degreesOfFreedom;
 
 % Get the minimum mean chi squared:
 galaxyFittingData{jj}.chiSquaredMin = min(galaxyFittingData{jj}.chiSquared);
+galaxyFittingData{jj}.chiSquaredReducedMin = min(galaxyFittingData{jj}.chiSquaredReduced);
 
 % Find the index of the minimum mean chi squared in the vector
 % "chiSquaredMean":
@@ -101,6 +115,23 @@ galaxyFittingData{jj}.bestA0 = a0Values(minPos(1));
 
 % Print general findings to the console:
 %fprintf('a_0 = %d; chi^2 = %d km^2/s^2\n', galaxies{jj}.bestA0, galaxies{jj}.chiSquaredMin);
+
+bestA0Overall = galaxyFittingData{end}.bestA0;
+bestA0Overall_index = galaxyFittingData{end}.bestA0_index;
+
+bestChiSquaredReduced = 10^10;
+bestGalaxyName = '';
+
+for jj = 1:numOfGalaxies
+    galaxy_chiSquaredReduced = galaxyFittingData{jj}.chiSquaredReduced(bestA0Overall_index);
+
+    if galaxy_chiSquaredReduced < bestChiSquaredReduced
+        bestChiSquaredReduced = galaxy_chiSquaredReduced;
+        bestGalaxyName = galaxyNames{jj};
+    end
+end
+
+fprintf('Best galaxy for %s: %s (a_0 = %s m/s^2, chi_v^2 = %s)\n', interpolationFunctionId, bestGalaxyName, num2str(bestA0Overall*1e3), num2str(bestChiSquaredReduced));
 
 end
 

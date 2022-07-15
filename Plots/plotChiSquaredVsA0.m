@@ -23,36 +23,36 @@ for jj = 1:numOfGalaxies
 end
 
 % Create a vector with the minimum chi squared for every galaxy:
-chiSquaredMin = zeros(numOfGalaxies,1);
+chiSquaredReducedMin = zeros(numOfGalaxies,1);
 for jj = 1:numOfGalaxies
-    chiSquaredMin(jj) = galaxyFittingData{jj}.chiSquaredMin;
+    chiSquaredReducedMin(jj) = galaxyFittingData{jj}.chiSquaredReducedMin;
 end
 
 % Create a vector with the chi squared of every galaxy for the best a0
 % overall:
-chiSquaredForBestOverallA0 = zeros(numOfGalaxies,1);
+chiSquaredReducedForBestOverallA0 = zeros(numOfGalaxies,1);
 bestOverallA0_index = galaxyFittingData{end}.bestA0_index;
 for jj = 1:numOfGalaxies
-    chiSquaredForBestOverallA0(jj) = galaxyFittingData{jj}.chiSquared(bestOverallA0_index);
+    chiSquaredReducedForBestOverallA0(jj) = galaxyFittingData{jj}.chiSquaredReduced(bestOverallA0_index);
 end
 
 %--------------------------------------------------------------------------
-% Subplot 1 (MSWD (\chi^2) vs a_0)
+% Subplot 1 (MSWD (\chi_\nu^2) vs a_0)
 
 if ~cleanFlag
     s = subplot(1,3,1);
 else
     s = subplot(1,1,1);
 end
-plot(galaxyFittingData{end}.a0Values, galaxyFittingData{end}.chiSquared);
+plot(galaxyFittingData{end}.a0Values, galaxyFittingData{end}.chiSquaredReduced);
 
 set(gca,'FontSize',15);
 xlabel 'a_0 [km/s^2]';
-ylabel '\chi^2';
-title('MSWD (\chi^2) vs a_0');
+ylabel '\chi_\nu^2';
+title('MSWD (\chi_\nu^2) vs a_0');
 grid on;
 
-txt = strcat('a_0 = ', sprintf('%d', galaxyFittingData{end}.bestA0), ' km/s^2; \chi^2 = ', sprintf('%d', galaxyFittingData{end}.chiSquaredMin));
+txt = strcat('a_0 = ', sprintf('%d', galaxyFittingData{end}.bestA0), ' km/s^2; \chi_\nu^2 = ', sprintf('%d', galaxyFittingData{end}.chiSquaredReducedMin));
 annotation('textbox','String',txt,'Position',s.Position,'Vert','top','FitBoxToText','on','BackgroundColor','w');
 
 % Draw one curve for each inidividual galaxy:
@@ -60,7 +60,7 @@ if ~cleanFlag
     hold on;
 
     for jj = 1:numOfGalaxies
-        plot(a0Values, galaxyFittingData{jj}.chiSquared);
+        plot(galaxyFittingData{jj}.a0Values, galaxyFittingData{jj}.chiSquaredReduced);
     end
 end
 
@@ -68,32 +68,49 @@ end
 % Subplot 2 (Best value of a_0 vs hubble type)
 
 if ~cleanFlag
-    subplot(1,3,2);
+    subplot(2,3,2);
     scatter(hubbleType,bestA0);
-    %semilogx(chiSquaredMin,bestA0,'o');
     
     set(gca,'FontSize',15);
     xlabel 'Hubble type';
-    ylabel 'a_0 [km/s^2]';
+    ylabel 'Best value of a_0 [km/s^2]';
     title('Best value of a_0 vs hubble type');
     grid on;
 end
 
 %--------------------------------------------------------------------------
-% Subplot 3 (MSWD (\chi^2) vs hubble type)
+% Subplot 3 (MSWD (\chi_\nu^2) vs hubble type)
 
 if ~cleanFlag
-    subplot(1,3,3);
-    semilogy(hubbleType,chiSquaredMin,'o');
+    subplot(2,3,3);
+    semilogy(hubbleType,chiSquaredReducedMin,'o');
     
     hold on;
-    semilogy(hubbleType,chiSquaredForBestOverallA0,'o');
+    semilogy(hubbleType,chiSquaredReducedForBestOverallA0,'o');
     
     set(gca,'FontSize',15);
     xlabel 'Hubble type';
-    ylabel '\chi^2';
-    title('MSWD (\chi^2) vs hubble type');
-    legend('Min. \chi^2', strcat('\chi^2 for a_0 = ', sprintf('%d km/s^2', bestA0Mean)), 'Location','SouthEast')
+    ylabel '\chi_\nu^2';
+    title('MSWD (\chi_\nu^2) vs hubble type');
+    legend('Min. \chi_\nu^2', strcat('\chi_\nu^2 for a_0 = ', sprintf('%d km/s^2', galaxyFittingData{end}.bestA0)), 'Location','SouthEast')
+    grid on;
+end
+
+%--------------------------------------------------------------------------
+% Subplot 4 (MSWD (\chi_\nu^2) vs best value of a0)
+
+if ~cleanFlag
+    subplot(2,3,[5,6]);
+    semilogy(bestA0,chiSquaredReducedMin,'o');
+    
+    hold on;
+    semilogy(bestA0,chiSquaredReducedForBestOverallA0,'o');
+    
+    set(gca,'FontSize',15);
+    xlabel 'Best value of a_0 [km/s^2]';
+    ylabel '\chi_\nu^2';
+    title('MSWD (\chi_\nu^2) vs best value of a_0');
+    legend('\chi_\nu^2 for respective a_0', strcat('\chi_\nu^2 for a_0 = ', sprintf('%d km/s^2', galaxyFittingData{end}.bestA0)), 'Location','SouthEast')
     grid on;
 end
 

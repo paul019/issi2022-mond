@@ -22,17 +22,20 @@ legendText = cell(length(interpolationFunctions),1);
 for ii = 1:length(interpolationFunctions)
     galaxyFittingData = interpolationFunctions{ii}.galaxyFittingData;
 
-    plot(galaxyFittingData{end}.a0Values, galaxyFittingData{end}.chiSquared);
+    plot(galaxyFittingData{end}.a0Values, galaxyFittingData{end}.chiSquaredReduced);
     hold on;
 
-    legendText{ii} = interpolationFunctions{ii}.name;
+    bestA0 = galaxyFittingData{end}.bestA0;
+    chiSquaredMin = galaxyFittingData{end}.chiSquaredMin;
+
+    legendText{ii} = strcat(interpolationFunctions{ii}.name, ' (a_0 = ', num2str(bestA0), ' ms^{-2})');
 end
 
 % Get the layout right:
 set(gca,'FontSize',15);
 xlabel 'a_0 [km/s^2]';
-ylabel '\chi^2';
-title('MSWD (\chi^2) vs a_0');
+ylabel '\chi_\nu^2';
+title('MSWD (\chi_\nu^2) vs a_0');
 grid on;
 legend(legendText, 'Location', 'NorthEast');
 
