@@ -1,6 +1,16 @@
-function plotGalaxyVelocityWithMONDFit(name, a0, MtoLdisk, MtoLbulge, interpolationFunctionIds)
-% plot a galaxy named 'name', with Mass to Light ratios of disk MtoLdisk
-% (~0.5) and bulge (~0.7).
+function plotGalaxyVelocityWithFits(name, MtoLdisk, MtoLbulge, mondFits, nfwFits)
+% name:         name of the galaxy                  'UGC01281'
+% MtoLdisk:     Mass to Light ratio of the disk     0.5
+% MtoLbulge:    Mass to Light ratio of the bulge    0.7
+% mondFits:     fits using MOND (cell array)        {struct('intFctId','rar','a0',1.2e-13)}
+% -> intFctId:  id of the interpolation function
+% -> a0:        the parameter a0 (in km/s^2)
+% nfwFits:      fits using NFW (cell array)         {struct('p0',3e-23,'R_S',6e16)}
+% -> p0:        the parameter p0 (in kg/km^3)
+% -> R_S:       the parameter R_S (in km)
+
+% plotGalaxyVelocityWithFits('UGC01281',0.5,0.7,{struct('intFctId','rar','a0',1.2e-13)},{struct('p0',3e-23,'R_S',6e16)});
+
 
 % Get rotation curve data:
 rotationCurveData = ReadRotmodLTGSingle(name);
@@ -13,7 +23,7 @@ Vdisk = rotationCurveData(:,5);     % in km/s
 Vbulge = rotationCurveData(:,6);    % in km/s
 
 % Inititlaize variables:
-kpcInKm = 3.086*10^16;
+kpcInKm = 3.086e16;
 velocityLegendArray = {
     'Kinematic data',...
     'Gas velocity',...
@@ -45,27 +55,67 @@ Aobs_max = (Vobs+Vobserr).^2 ./ (r*kpcInKm);  % in km/s2
 Aobserr = (Aobs_max-Aobs_min) ./ 2;   % in km/s2
 Aexpected = Vbaryon.^2 ./ (r*kpcInKm);  % in km/s2
 
-% Get the number of interpolation functions:
-numOfIntFcts = length(interpolationFunctionIds);
+%--------------------------------------------------------------------------
+% Calculating the MOND fits:
+
+% Get the number of MOND fits:
+numOfMONDFits = length(mondFits);
 
 % Initialize cell arrays for MOND fits:
-Vmond_r = cell(numOfIntFcts,1);
-Vmond   = cell(numOfIntFcts,1);
-Amond   = cell(numOfIntFcts,1);
+Vmond_r = cell(numOfMONDFits,1);
+Vmond   = cell(numOfMONDFits,1);
+Amond   = cell(numOfMONDFits,1);
 
-% Calculate the MOND fit for different interpolation functions:
-for ii = 1:numOfIntFcts
-    intFctId = interpolationFunctionIds{ii};
+% Prepare rotation curve data for MOND:
+rotationCurveData_MOND = prepareGalaxyRotationCurveData(name,MtoLdisk,MtoLbulge,true);
+
+% Calculate the MOND fits:
+for ii = 1:numOfMONDFits
+    intFctId = mondFits{ii}.intFctId;
     intFctName = getInterpolationFunctionName(intFctId);
+    a0 = mondFits{ii}.a0;
 
-    [Vmond_r{ii}, Vmond{ii}] = calculateMONDVelocitiesForGalaxy(prepareGalaxyForMOND(name,MtoLdisk,MtoLbulge),a0,intFctId);     % in km/s
+    [Vmond_r{ii}, Vmond{ii}] = calculateMONDVelocitiesForGalaxy(rotationCurveData_MOND,a0,intFctId);     % in km/s
     Amond{ii} = Vmond{ii}.^2 ./ (Vmond_r{ii});  % in km/s2
 
     velocityLegendArray{end + 1} = strcat('MOND fit (', intFctName, ')');
     accelerationLegendArray{end + 1} = strcat('MOND fit (', intFctName, ')');
 end
 
+%--------------------------------------------------------------------------
+% Calculating the NFW fits:
+
+% Get the number of NFW fits:
+numOfNFWFits = length(nfwFits);
+
+% Initialize cell arrays for NFW fits:
+Vnfw_r = cell(numOfMONDFits,1);
+Vnfw   = cell(numOfMONDFits,1);
+Anfw   = cell(numOfMONDFits,1);
+
+% Prepare rotation curve data for NFW:
+rotationCurveData_NFW = prepareGalaxyRotationCurveData(name,MtoLdisk,MtoLbulge,false);
+
+% Calculate the NFW fits:
+for ii = 1:numOfNFWFits
+    p0 = nfwFits{ii}.p0;
+    R_S = nfwFits{ii}.R_S;
+
+    [Vnfw_r{ii}, Vnfw{ii}] = calculateNFWVelocitiesForGalaxy(rotationCurveData_NFW,p0,R_S);     % in km/s
+    Anfw{ii} = Vnfw{ii}.^2 ./ (Vnfw_r{ii});  % in km/s2
+
+    if numOfNFWFits == 1
+        velocityLegendArray{end + 1} = 'NFW fit';
+        accelerationLegendArray{end + 1} = 'NFW fit';
+    else
+        velocityLegendArray{end + 1} = sprintf('NFW fit #%d', ii);
+        accelerationLegendArray{end + 1} = sprintf('NFW fit #%d', ii);
+    end
+end
+
+%--------------------------------------------------------------------------
 % Prepare figure:
+
 figure
 
 %--------------------------------------------------------------------------
@@ -80,8 +130,11 @@ if bulgeFlag
     scatter(r,sqrt(MtoLbulge)*Vbulge)
 end
 plot(r,Vbaryon,'--','linewidth',2)
-for ii = 1:numOfIntFcts
+for ii = 1:numOfMONDFits
     plot(Vmond_r{ii}/kpcInKm,Vmond{ii},'--','linewidth',2)
+end
+for ii = 1:numOfNFWFits
+    plot(Vnfw_r{ii}/kpcInKm,Vnfw{ii},'--','linewidth',2)
 end
 
 title(strcat(name));            
@@ -101,8 +154,11 @@ subplot(2,1,2)
 hold on;
 errorbar(r,Aobs,Aobserr,'.')
 plot(r,Aexpected,'--','linewidth',2)
-for ii = 1:numOfIntFcts
+for ii = 1:numOfMONDFits
     plot(Vmond_r{ii}/kpcInKm,Amond{ii},'--','linewidth',2)
+end
+for ii = 1:numOfNFWFits
+    plot(Vnfw_r{ii}/kpcInKm,Anfw{ii},'--','linewidth',2)
 end
 
 subplot(2,1,2);

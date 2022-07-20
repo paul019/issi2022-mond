@@ -1,4 +1,9 @@
-function rotationCurveData = prepareGalaxyForMOND(name,MtoLdisk,MtoLbulge)
+function rotationCurveData = prepareGalaxyRotationCurveData(name,MtoLdisk,MtoLbulge,noImaginaryNumbersFlag)
+% prepareGalaxyForMOND
+
+if nargin < 4
+    noImaginaryNumbersFlag = true;
+end
 
 % Get rotation curve data:
 rotationCurveData = ReadRotmodLTGSingle(name);
@@ -72,19 +77,21 @@ end
 
 % Adding a column to rotationCurveData:
     % 11 total baryonic velocity (calculated) in km/s
-    rotationCurveData(:,11) = sqrt(abs(Vgas).*Vgas+MtoLdisk*abs(Vdisk).*Vdisk+bulgeFlag*MtoLbulge*abs(Vbulge).*Vbulge);
+    rotationCurveData(:,11) = sqrt(abs(Vgas).*Vgas + MtoLdisk*abs(Vdisk).*Vdisk + bulgeFlag*MtoLbulge*abs(Vbulge).*Vbulge);
 
-% Delete rows where the total baryonic velocity is zero or has an
-% imaginary component:
-ii = 1;
-dataSize = size(rotationCurveData);
-dataLength = dataSize(1);
-while ii <= dataLength
-    if (~isreal(rotationCurveData(ii,11))) || rotationCurveData(ii,11) == 0
-        rotationCurveData(ii,:) = [];
-        dataLength = dataLength - 1;
-    else
-        ii = ii + 1;
+if noImaginaryNumbersFlag
+    % Delete rows where the total baryonic velocity is zero or has an
+    % imaginary component:
+    ii = 1;
+    dataSize = size(rotationCurveData);
+    dataLength = dataSize(1);
+    while ii <= dataLength
+        if (~isreal(rotationCurveData(ii,11))) || rotationCurveData(ii,11) == 0
+            rotationCurveData(ii,:) = [];
+            dataLength = dataLength - 1;
+        else
+            ii = ii + 1;
+        end
     end
 end
 

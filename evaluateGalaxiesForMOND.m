@@ -1,7 +1,11 @@
-function [galaxyNames, galaxyFittingData] = evaluateGalaxies(a0Min,a0Step,a0Max,interpolationFunctionId,galaxyNames)
+function [galaxyNames, galaxyFittingData] = evaluateGalaxiesForMOND(a0Min,a0Step,a0Max,interpolationFunctionId,printflag,galaxyNames,a0)
+
+% Define constants:
+MtoLdisk = 0.5;
+MtoLbulge = 0.7;
 
 % Default value for interpolationFunction:
-if nargin < 4
+if nargin < 5
     interpolationFunctionId = 'linear';
 end
 
@@ -9,7 +13,7 @@ end
 [allGalaxyNames,~] = ReadLelliC;
 
 % Deal with the input argument "galaxyNames":
-if nargin < 5
+if nargin < 6
     galaxyNames = allGalaxyNames;
 else
     myGalaxyNames = galaxyNames;
@@ -37,10 +41,19 @@ galaxyFittingData = cell(numOfGalaxies + 1, 1);
 % Keep track of the total number of datapoints:
 totalNumberOfDatapoints = 0;
 
+%--------------------------------------------------------------------------
+
 % Iterate through all galaxies in order to get rotation curve data:
 for ii = 1:numOfGalaxies
-    galaxyFittingData{ii}.rotationCurveData = prepareGalaxyForMOND(galaxyNames{ii},0.5,0.7);
+    galaxyFittingData{ii}.rotationCurveData = prepareGalaxyRotationCurveData(galaxyNames{ii},MtoLdisk,MtoLbulge);
     totalNumberOfDatapoints = totalNumberOfDatapoints + length(galaxyFittingData{ii}.rotationCurveData);
+
+    galaxyFittingData{ii}.typeOfFit = 'MOND';
+end
+
+% Print status update:
+if printflag
+    fprintf('\nEvaluating %d datapoints from %d galaxies.\n', totalNumberOfDatapoints, numOfGalaxies);
 end
 
 % Create a vector with all values of a0 we want to try out:
@@ -49,6 +62,8 @@ a0Values = transpose(a0Min:a0Step:a0Max);
 % Create a matrix with one cell for every combination of a value of a0 and
 % a galaxy:
 chiSquared = zeros(length(a0Values), numOfGalaxies + 1);
+
+%--------------------------------------------------------------------------
 
 % Iterate over all galaxies:
 for jj = 1:numOfGalaxies
@@ -87,6 +102,8 @@ for jj = 1:numOfGalaxies
     %fprintf('%s: a_0 = %d km/s^2; chi^2 = %d km^2/s^2\n', galaxies{jj}.name, galaxies{jj}.bestA0, galaxies{jj}.chiSquaredMin);
 end
 
+%--------------------------------------------------------------------------
+
 % The last entry in the cell array "galaxies" represents the average of all
 % galaxies:
 jj = numOfGalaxies + 1;
@@ -110,20 +127,49 @@ galaxyFittingData{jj}.chiSquaredReducedMin = min(galaxyFittingData{jj}.chiSquare
 minPos = find(galaxyFittingData{jj}.chiSquared == galaxyFittingData{jj}.chiSquaredMin);
 galaxyFittingData{jj}.bestA0_index = minPos(1);
 
-% Find the best value of a0 for all galaxies:
-galaxyFittingData{jj}.bestA0 = a0Values(minPos(1));
+if nargin < 7
+    % Find the best value of a0 for all galaxies:
+    galaxyFittingData{jj}.bestA0 = a0Values(minPos(1));
+else
+    % Use the value of a0 passed into the 
+    galaxyFittingData{jj}.bestA0 = a0;
+    galaxyFittingData{jj}.bestA0_index = find(a0Values == a0);
+end
 
 % Print general findings to the console:
-%fprintf('a_0 = %d; chi^2 = %d km^2/s^2\n', galaxies{jj}.bestA0, galaxies{jj}.chiSquaredMin);
+if printflag
+    fprintf('All galaxies: a_0 = %d; chi_v^2 = %d\n\n', galaxyFittingData{jj}.bestA0, galaxyFittingData{jj}.chiSquaredReducedMin);
+end
 
 bestA0Overall = galaxyFittingData{end}.bestA0;
 bestA0Overall_index = galaxyFittingData{end}.bestA0_index;
+
+%--------------------------------------------------------------------------
+
+% Iterate over all galaxies:
+for jj = 1:numOfGalaxies
+    galaxyFittingData{jj}.chiSquared_forBestOverallA0 = galaxyFittingData{jj}.chiSquared(bestA0Overall_index);
+    galaxyFittingData{jj}.chiSquaredReduced_forBestOverallA0 = galaxyFittingData{jj}.chiSquaredReduced(bestA0Overall_index);
+
+    galaxyFittingData{jj}.chiSquared_general = galaxyFittingData{jj}.chiSquared_forBestOverallA0;
+    galaxyFittingData{jj}.chiSquaredReduced_general = galaxyFittingData{jj}.chiSquaredReduced_forBestOverallA0;
+
+    % Save galaxy data as human-readable string:
+    galaxyFittingData{jj}.dataString = sprintf('%s: chi_v^2 = %d', galaxyNames{jj}, galaxyFittingData{jj}.chiSquaredReduced_general);
+
+    % Print galaxy data to console:
+    if printflag
+        fprintf('%s\n', galaxyFittingData{jj}.dataString);
+    end
+end
+
+%--------------------------------------------------------------------------
 
 bestChiSquaredReduced = 10^10;
 bestGalaxyName = '';
 
 for jj = 1:numOfGalaxies
-    galaxy_chiSquaredReduced = galaxyFittingData{jj}.chiSquaredReduced(bestA0Overall_index);
+    galaxy_chiSquaredReduced = galaxyFittingData{jj}.chiSquaredReduced_forBestOverallA0;
 
     if galaxy_chiSquaredReduced < bestChiSquaredReduced
         bestChiSquaredReduced = galaxy_chiSquaredReduced;
@@ -131,7 +177,9 @@ for jj = 1:numOfGalaxies
     end
 end
 
-fprintf('Best galaxy for %s: %s (a_0 = %s m/s^2, chi_v^2 = %s)\n', interpolationFunctionId, bestGalaxyName, num2str(bestA0Overall*1e3), num2str(bestChiSquaredReduced));
+if printflag
+    fprintf('\nBest galaxy for %s: %s (a_0 = %s m/s^2, chi_v^2 = %s)\n\n', interpolationFunctionId, bestGalaxyName, num2str(bestA0Overall*1e3), num2str(bestChiSquaredReduced));
+end
 
 end
 

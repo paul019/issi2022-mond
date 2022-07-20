@@ -1,0 +1,143 @@
+function [galaxyNames, galaxyFittingData] = evaluateGalaxiesForNFW(printflag,galaxyNames)
+
+% Define constants:
+MtoLdisk = 0.5;
+MtoLbulge = 0.7;
+G = 6.6743e-11;                     % in m^3 * kg^(-1) * s^(-2)
+
+% Define starting values for the fit with the right order of magnitude:
+params_start = [1e-23, 1e17];
+    % params_start(1) = p0 in kg/km^3
+    % params_start(2) = R_S in km
+
+% Import the names and metadata of all galaxies from the SPARC database:
+[allGalaxyNames,~] = ReadLelliC;
+
+% Deal with the input argument "galaxyNames":
+if nargin < 2
+    galaxyNames = allGalaxyNames;
+else
+    myGalaxyNames = galaxyNames;
+
+    galaxyNames = {};
+    index = 1;
+
+    for ii = 1:length(allGalaxyNames)
+        for jj = 1:length(myGalaxyNames)
+            if strcmp(allGalaxyNames{ii}, myGalaxyNames{jj})
+                galaxyNames{index} = allGalaxyNames{ii};
+                index = index + 1;
+                break
+            end
+        end
+    end
+end
+
+% Get the number of galaxies:
+numOfGalaxies = length(galaxyNames);
+
+% Create a cell array for all galaxies:
+galaxyFittingData = cell(numOfGalaxies + 1, 1);
+
+% Keep track of the total number of datapoints:
+totalNumberOfDatapoints = 0;
+
+% Initialize a vector for all chi squared values:
+chiSquared = zeros(numOfGalaxies,1);
+
+%--------------------------------------------------------------------------
+
+% Iterate through all galaxies in order to get rotation curve data:
+for ii = 1:numOfGalaxies
+    galaxyFittingData{ii}.rotationCurveData = prepareGalaxyRotationCurveData(galaxyNames{ii},MtoLdisk,MtoLbulge,true);
+    totalNumberOfDatapoints = totalNumberOfDatapoints + length(galaxyFittingData{ii}.rotationCurveData);
+
+    galaxyFittingData{ii}.typeOfFit = 'NFW';
+end
+
+% Print status update:
+if printflag
+    fprintf('\nEvaluating %d datapoints from %d galaxies.\n', totalNumberOfDatapoints, numOfGalaxies);
+end
+
+% Define fitting functions:
+V_DM_fun       = @(r,params) sqrt( G * r.^(-1) * 4 * pi * params(1) * params(2)^3 .* ( log( (params(2) + r) ./ params(2) ) + params(2) ./ (params(2) + r) - 1 ) );
+V_total_fun    = @(r,V_bar,params) sqrt( V_bar.^2 + V_DM_fun(r,params).^2 );
+chiSquared_fun = @(params,data) sum( ( ( V_total_fun(data(:,9),data(:,11),params) - data(:,2) ) ./ data(:,3) ).^2 );
+
+%--------------------------------------------------------------------------
+
+% Iterate over all galaxies:
+for jj = 1:numOfGalaxies
+    % Use the built-in MATLAB function fminsearch in order to find the best
+    % parameters p0 and R_S:
+    options = optimset('MaxFunEvals',10000,'MaxIter',10000);
+    [params_best,chiSquared_min] = fminsearch(chiSquared_fun, params_start, options, galaxyFittingData{jj}.rotationCurveData);
+
+    % Calculate the degrees of freedom:
+    galaxyFittingData{jj}.degreesOfFreedom = length(galaxyFittingData{jj}.rotationCurveData) - 3;
+
+    % Save chi squared data:
+    galaxyFittingData{jj}.chiSquared = chiSquared_min;
+    chiSquared(jj) = chiSquared_min;
+    galaxyFittingData{jj}.chiSquaredReduced = chiSquared_min / galaxyFittingData{jj}.degreesOfFreedom;
+
+    galaxyFittingData{jj}.chiSquared_general = galaxyFittingData{jj}.chiSquared;
+    galaxyFittingData{jj}.chiSquaredReduced_general = galaxyFittingData{jj}.chiSquaredReduced;
+
+    % Save parameter data:
+    galaxyFittingData{jj}.bestP0 = params_best(1);
+    galaxyFittingData{jj}.bestR_S = params_best(2);
+
+    % Save galaxy data as human-readable string:
+    galaxyFittingData{jj}.dataString = sprintf('%s: p_0 = %d kg/km^3; R_S = %d km; chi_v^2 = %d', galaxyNames{jj}, galaxyFittingData{jj}.bestP0, galaxyFittingData{jj}.bestR_S, galaxyFittingData{jj}.chiSquaredReduced);
+end
+
+%--------------------------------------------------------------------------
+
+% The last entry in the cell array "galaxies" represents the average of all
+% galaxies:
+jj = numOfGalaxies + 1;
+
+% Calculate the degrees of freedom:
+galaxyFittingData{jj}.degreesOfFreedom = totalNumberOfDatapoints - 2 * numOfGalaxies - 1;
+
+% Calculate the chi squared for all galaxies:
+galaxyFittingData{jj}.chiSquared = sum(chiSquared);
+galaxyFittingData{jj}.chiSquaredReduced = sum(chiSquared) / galaxyFittingData{jj}.degreesOfFreedom;
+
+% Print general findings to the console:
+fprintf('All galaxies: chi_v^2 = %d\n\n', galaxyFittingData{jj}.chiSquaredReduced);
+
+%--------------------------------------------------------------------------
+% Print galaxy data to console:
+
+for jj = 1:numOfGalaxies
+    if printflag
+        fprintf('%s\n', galaxyFittingData{jj}.dataString);
+    end
+end
+
+%--------------------------------------------------------------------------
+% Determine the galaxy with the best fit:
+
+bestChiSquaredReduced = 10^10;
+bestGalaxyName = '';
+bestGalaxyIndex = -1;
+
+for jj = 1:numOfGalaxies
+    galaxy_chiSquaredReduced = galaxyFittingData{jj}.chiSquaredReduced;
+
+    if galaxy_chiSquaredReduced < bestChiSquaredReduced
+        bestChiSquaredReduced = galaxy_chiSquaredReduced;
+        bestGalaxyName = galaxyNames{jj};
+        bestGalaxyIndex = jj;
+    end
+end
+
+if printflag
+    fprintf('Best galaxy: %s\n\n', galaxyFittingData{bestGalaxyIndex}.dataString);
+end
+
+end
+
