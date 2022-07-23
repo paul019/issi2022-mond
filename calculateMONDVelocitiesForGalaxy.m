@@ -12,7 +12,8 @@ Vbaryon = rotationCurveData(:,11);  % in km/s
 switch interpolationFunctionId
     case 'linear'
         % Linear approach:
-        MONDVelocities = nthroot(abs((Vbaryon.^2).*r*a0),4);
+        interpolationFunction_ = getInterpolationFunction('linear');
+        MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
 
     case 'rar'
         % RAR approach:
@@ -23,7 +24,7 @@ switch interpolationFunctionId
         MONDVelocities=sqrt(((Vbaryon.^2) + sqrt((real(Vbaryon).^4) + 4*(real(Vbaryon).^2).* a0.*r))/2);
     
     case 'simple-implicit'
-        interpolationFunction_ = @(x) x/(1+x);
+        interpolationFunction_ = getInterpolationFunction('simple');
         MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
 
     case 'standard'
@@ -31,26 +32,25 @@ switch interpolationFunctionId
         MONDVelocities=nthroot(((Vbaryon.^4) + sqrt((Vbaryon.^8) + 4*(Vbaryon.^4).* (a0^2).*(r).^2))/2 ,4);
 
     case 'standard-implicit'
-        interpolationFunction_ = @(x) x/sqrt(1+x^2);
+        interpolationFunction_ = getInterpolationFunction('standard');
         MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
 
     case 'toy'
         % Toy approach:
-        interpolationFunction_ = @(x) (sqrt(1+4*x)-1)/(sqrt(1+4*x)+1);
+        interpolationFunction_ = getInterpolationFunction('toy');
         MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
 
     case 'exp'
         % Exponential approach:
-        interpolationFunction_ = @(x) 1-exp(-x);
+        interpolationFunction_ = getInterpolationFunction('exp');
         MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
-
-        % PUT IN MORE INTERPOLATION FUNCTIONS
 
     otherwise
         fprintf('There is no interpolation function called ''%s''. Using the linear approach instead.\n', interpolationFunctionId);
 
         % Linear approach:
-        MONDVelocities = nthroot(abs((Vbaryon.^2).*r*a0),4);
+        interpolationFunction_ = getInterpolationFunction('linear');
+        MONDVelocities = implicitEquationSolver(r,Vbaryon,a0,interpolationFunction_);
 end
 
 if ~isreal(MONDVelocities)

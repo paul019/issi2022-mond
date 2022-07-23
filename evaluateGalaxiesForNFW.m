@@ -3,7 +3,10 @@ function [galaxyNames, galaxyFittingData] = evaluateGalaxiesForNFW(printflag,gal
 % Define constants:
 MtoLdisk = 0.5;
 MtoLbulge = 0.7;
-G = 6.6743e-11;                     % in m^3 * kg^(-1) * s^(-2)
+G = 6.6743e-2;                      % in km^3 * kg^(-1) * s^(-2)
+c = 299792458;                      % in m/s
+jouleInEV = 6.242e18;
+kpcInKm = 3.0857e16;
 
 % Define starting values for the fit with the right order of magnitude:
 params_start = [1e-23, 1e17];
@@ -103,8 +106,11 @@ for jj = 1:numOfGalaxies
     galaxyFittingData{jj}.chiSquaredReduced_general = galaxyFittingData{jj}.chiSquaredReduced;
 
     % Save parameter data:
-    galaxyFittingData{jj}.bestP0 = params_best(1);
-    galaxyFittingData{jj}.bestR_S = params_best(2);
+    galaxyFittingData{jj}.bestP0 = params_best(1);      % in kg/km^3
+    galaxyFittingData{jj}.bestR_S = params_best(2);     % in km
+
+    galaxyFittingData{jj}.bestP0_eV = params_best(1) / 1e9 * c^2 * jouleInEV / 1e6;       % in eV/cm^3
+    galaxyFittingData{jj}.bestR_S_kpc = params_best(2) / kpcInKm;                         % in kpc
 
     % Save galaxy data as human-readable string:
     galaxyFittingData{jj}.dataString = sprintf('%s: p_0 = %d kg/km^3; R_S = %d km; chi_v^2 = %d', galaxyNames{jj}, galaxyFittingData{jj}.bestP0, galaxyFittingData{jj}.bestR_S, galaxyFittingData{jj}.chiSquaredReduced);

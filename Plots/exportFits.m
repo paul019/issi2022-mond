@@ -117,14 +117,18 @@ galaxyNames_ = [galaxyNames; {'All galaxies'}];
 numberOfDatapoints = zeros(numOfGalaxies + 1, 1);
 chiSquaredReduced_ = num2cell(chiSquaredReduced',1);
 p0 = zeros(numOfGalaxies + 1, 1);
+p0_eV = zeros(numOfGalaxies + 1, 1);
 R_S = zeros(numOfGalaxies + 1, 1);
+R_S_kpc = zeros(numOfGalaxies + 1, 1);
 
 % Iterate through all galaxies:
 for ii = 1:numOfGalaxies
     numberOfDatapoints(ii) = galaxyFittingDataArray{1}{ii}.numberOfDatapoints;
 
     p0(ii) = galaxyFittingDataArray{end}{ii}.bestP0;
+    p0_eV(ii) = galaxyFittingDataArray{end}{ii}.bestP0_eV;
     R_S(ii) = galaxyFittingDataArray{end}{ii}.bestR_S;
+    R_S_kpc(ii) = galaxyFittingDataArray{end}{ii}.bestR_S_kpc;
 end
 numberOfDatapoints(end) = galaxyFittingDataArray{1}{end}.numberOfDatapoints;
 
@@ -137,12 +141,12 @@ columns3 = cell(numOfFits,1);
 for ii = 1:numOfFits
     columns3{ii} = chiSquaredReduced_{ii}(order);
 end
-column4 = p0(order);
-column5 = R_S(order);
+column4 = p0_eV(order);
+column5 = R_S_kpc(order);
 
 % Create and save table:
 
-table2 = table(column1, column2, columns3{:}, column4, column5, 'VariableNames', [{'Galaxy Name', 'Number of datapoints'}, fitNames_, {'\rho_0', 'R_S'}]);
+table2 = table(column1, column2, columns3{:}, column4, column5, 'VariableNames', [{'Galaxy Name', 'Number of datapoints'}, fitNames_, {'\rho_0 [eV/cm^3]', 'R_S [kpc]'}]);
 
 writetable(table2,'output/MONDFits_galaxies.csv');
 
@@ -164,18 +168,48 @@ figure
 for ii = 1:numOfFits
     subplot(2,4,ii);
 
-    title = fitNames{ii};
+    title_ = fitNames{ii};
     if ii ~= numOfFits
         subtitle = sprintf('a_0 = %s m/s^2', num2str(galaxyFittingDataArray{ii}{end}.bestA0 * 1e3));
     else
         subtitle = '';
     end
 
-    plotChiSquaredHistogram(galaxyNames,galaxyFittingDataArray{ii},50,false,title,subtitle);
+    plotChiSquaredHistogram(galaxyNames,galaxyFittingDataArray{ii},50,false,title_,subtitle);
 end
 
 set(gcf, 'Position',  [100, 100, 1500, 750])
 saveas(gcf,'output/MONDFits_MSWD_histogram.png');
+
+%--------------------------------------------------------------------------
+% Export third plot (intFcts.png)
+%--------------------------------------------------------------------------
+
+x = 0:0.1:10;
+y = zeros(numOfIntFcts, length(x));
+
+for ii = 1:numOfIntFcts
+    intFct = getInterpolationFunction(intFctIds{ii});
+    y(ii, :) = intFct(x);
+end
+
+figure
+
+for ii = 1:numOfIntFcts
+    plot(x,y(ii,:));
+    hold on
+end
+
+title('Interpolation functions');            
+legend(fitNames(1:end-1), 'Location', 'SouthEast');
+grid on;
+set(gca,'FontSize',15);
+xlabel 'x';
+ylabel '\mu(x)';
+axis([0 10 0 1.1]);
+
+set(gcf, 'Position',  [100, 100, 750, 500])
+saveas(gcf,'output/intFcts.png');
 
 %--------------------------------------------------------------------------
 % Export plots for single galaxies (GALAXYNAME_v_vs_r.png)

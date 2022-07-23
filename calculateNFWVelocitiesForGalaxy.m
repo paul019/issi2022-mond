@@ -1,7 +1,7 @@
 function [r, NFWVelocities] = calculateNFWVelocitiesForGalaxy(rotationCurveData,p0,R_S)
 
 % Define constants:
-G = 6.6743e-11;                     % in m^3 * kg^(-1) * s^(-2)
+G = 6.6743e-2;                      % in km^3 * kg^(-1) * s^(-2)
 
 r = rotationCurveData(:,9);         % in km
 Vbaryon = rotationCurveData(:,11);  % in km/s
