@@ -63,7 +63,14 @@ end
 % Define fitting functions:
 V_DM_fun       = @(r,params) sqrt( G * r.^(-1) * 4 * pi * params(1) * params(2)^3 .* ( log( (params(2) + r) ./ params(2) ) + params(2) ./ (params(2) + r) - 1 ) );
 V_total_fun    = @(r,V_bar,params) sqrt( V_bar.^2 + V_DM_fun(r,params).^2 );
-chiSquared_fun = @(params,data) sum( ( ( V_total_fun(data(:,9),data(:,11),params) - data(:,2) ) ./ data(:,3) ).^2 );
+
+    function chiSquared = chiSquared_fun(params,data)
+        if params(1) < 0 || params(2) < 0
+            chiSquared = 1e10;
+        else
+            chiSquared = sum( ( ( V_total_fun(data(:,9),data(:,11),params) - data(:,2) ) ./ data(:,3) ).^2 );
+        end
+    end
 
 %--------------------------------------------------------------------------
 
@@ -71,8 +78,18 @@ chiSquared_fun = @(params,data) sum( ( ( V_total_fun(data(:,9),data(:,11),params
 for jj = 1:numOfGalaxies
     % Use the built-in MATLAB function fminsearch in order to find the best
     % parameters p0 and R_S:
-    options = optimset('MaxFunEvals',10000,'MaxIter',10000);
-    [params_best,chiSquared_min] = fminsearch(chiSquared_fun, params_start, options, galaxyFittingData{jj}.rotationCurveData);
+    options = optimset('MaxFunEvals',1000000,'MaxIter',1000000);
+    [params_best,chiSquared_min] = fminsearch(@chiSquared_fun, params_start, options, galaxyFittingData{jj}.rotationCurveData);
+
+    %{
+    if min(V_DM_fun(galaxyFittingData{jj}.rotationCurveData(:,9), params_best)) < 1
+        disp(jj)
+        disp(galaxyNames{jj})
+        disp(V_DM_fun(galaxyFittingData{jj}.rotationCurveData(:,9), params_best))
+        disp(params_best)
+        disp(chiSquared_min)
+    end
+    %}
 
     % Calculate the degrees of freedom:
     galaxyFittingData{jj}.degreesOfFreedom = length(galaxyFittingData{jj}.rotationCurveData) - 3;
@@ -106,8 +123,13 @@ galaxyFittingData{jj}.degreesOfFreedom = totalNumberOfDatapoints - 2 * numOfGala
 galaxyFittingData{jj}.chiSquared = sum(chiSquared);
 galaxyFittingData{jj}.chiSquaredReduced = sum(chiSquared) / galaxyFittingData{jj}.degreesOfFreedom;
 
+galaxyFittingData{jj}.chiSquared_general = galaxyFittingData{jj}.chiSquared;
+galaxyFittingData{jj}.chiSquaredReduced_general = galaxyFittingData{jj}.chiSquaredReduced;
+
 % Print general findings to the console:
-fprintf('All galaxies: chi_v^2 = %d\n\n', galaxyFittingData{jj}.chiSquaredReduced);
+if printflag
+    fprintf('All galaxies: chi_v^2 = %d\n\n', galaxyFittingData{jj}.chiSquaredReduced);
+end
 
 %--------------------------------------------------------------------------
 % Print galaxy data to console:

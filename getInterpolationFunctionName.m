@@ -2,28 +2,28 @@ function name = getInterpolationFunctionName(id)
 
 switch id
     case 'linear'
-        name = 'Linear approach';
+        name = 'Linear';
 
     case 'rar'
-        name = 'Radial acceleration relation (RAR)';
+        name = 'RAR';
 
     case 'simple'
-        name = 'Simple interpolation';
+        name = 'Simple';
     
     case 'simple-implicit'
-        name = 'Simple interpolation';
+        name = 'Simple';
 
     case 'standard'
-        name = 'Standard interpolation';
+        name = 'Standard';
 
     case 'standard-implicit'
-        name = 'Standard interpolation';
+        name = 'Standard';
 
     case 'toy'
         name = 'Toy';
 
     case 'exp'
-        name = '''Exponential'' interpolation';
+        name = '''Exponential''';
 
     otherwise
         name = '';

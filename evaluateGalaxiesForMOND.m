@@ -77,8 +77,10 @@ for jj = 1:numOfGalaxies
     end
 
     galaxyFittingData{jj}.a0Values = a0Values;
+    galaxyFittingData{jj}.intFctId = interpolationFunctionId;
 
     % Calculate the degrees of freedom:
+    galaxyFittingData{jj}.numberOfDatapoints = length(galaxyFittingData{jj}.rotationCurveData);
     galaxyFittingData{jj}.degreesOfFreedom = length(galaxyFittingData{jj}.rotationCurveData) - 2;
 
     % Each galaxy gets a vector with chi squared for every value of a0:
@@ -109,8 +111,10 @@ end
 jj = numOfGalaxies + 1;
 
 galaxyFittingData{jj}.a0Values = a0Values;
+galaxyFittingData{jj}.intFctId = interpolationFunctionId;
 
 % Calculate the degrees of freedom:
+galaxyFittingData{jj}.numberOfDatapoints = totalNumberOfDatapoints;
 galaxyFittingData{jj}.degreesOfFreedom = totalNumberOfDatapoints - 2;
 
 % Calculate the mean chi squared for every value of a0 by averaging over
@@ -121,6 +125,12 @@ galaxyFittingData{jj}.chiSquaredReduced = sum(chiSquared,2) / galaxyFittingData{
 % Get the minimum mean chi squared:
 galaxyFittingData{jj}.chiSquaredMin = min(galaxyFittingData{jj}.chiSquared);
 galaxyFittingData{jj}.chiSquaredReducedMin = min(galaxyFittingData{jj}.chiSquaredReduced);
+
+galaxyFittingData{jj}.chiSquared_forBestOverallA0 = galaxyFittingData{jj}.chiSquaredMin;
+galaxyFittingData{jj}.chiSquaredReduced_forBestOverallA0 = galaxyFittingData{jj}.chiSquaredReducedMin;
+
+galaxyFittingData{jj}.chiSquared_general = galaxyFittingData{jj}.chiSquaredMin;
+galaxyFittingData{jj}.chiSquaredReduced_general = galaxyFittingData{jj}.chiSquaredReducedMin;
 
 % Find the index of the minimum mean chi squared in the vector
 % "chiSquaredMean":
