@@ -4,8 +4,6 @@ This code was created by the Physics team of the [International Summer Science I
 
 The following documentation explains the code.
 
-***
-
 ## File Structure
 
 - **`BackgroundFunctions`**: This folder contains functions which read data from the SPARC database. Some functions return rotation curves, other functions return galaxy metadata.
@@ -17,8 +15,6 @@ The following documentation explains the code.
 - **`Output`**: This folder does not exist initially. It is created by the function `exportFits` and used to store all exported results.
 - **`Plots`**: This folder contains functions which can export the results.
 
-***
-
 ## Installation
 
 1. [Install MATLAB](https://de.mathworks.com/products/matlab.html) on your computer.
@@ -29,8 +25,6 @@ The following documentation explains the code.
 4. Open MATLAB and navigate to the folder `issi2022-mond` that you just downloaded.
 5. Select all subfolders (`BackgroundFunctions`, `CurveFitting`,...) and do: right click &rarr; Add to path &rarr; Selected Folders.
 6. Congratulations! The installation is done. You can use the code by running some of the commands below in the MATLAB Command Window.
-
-***
 
 ## Getting started
 
