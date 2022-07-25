@@ -7,8 +7,8 @@ function [fitIds,galaxyFittingDataArray] = exportFits(galaxyNamesForPlot, intFct
 fprintf('\n');
 
 % Create output folder:
-if not(isfolder('output'))
-   mkdir('output')
+if not(isfolder('Output'))
+   mkdir('Output')
 end
 
 % Define constants:
@@ -77,7 +77,7 @@ fprintf('\nEvaluated %d datapoints from %d galaxies.\n', galaxyFittingDataArray{
 fprintf('Exporting results\n')
 
 %--------------------------------------------------------------------------
-% Export first table (MONDFits_overview.csv):
+% Export first table (fits_overview.csv):
 %--------------------------------------------------------------------------
 
 % Initialize more arrays to save data:
@@ -113,10 +113,10 @@ column4 = numOfGalaxiesWithGoodFit;
 % Create and save table:
 table1 = table(column1, column2, column3, column4, 'VariableNames', {'Fit', 'Best a_0 (in m/s^2)', 'chi_v^2', 'Number of galaxies with chi_v^2 < 1'});
 
-writetable(table1,'output/MONDFits_overview.csv');
+writetable(table1,'Output/fits_overview.csv');
 
 %--------------------------------------------------------------------------
-% Export second table (MONDFits_galaxies.csv):
+% Export second table (fits_galaxy_details.csv):
 %--------------------------------------------------------------------------
 
 % Initialize row array with interpolation function names:
@@ -167,19 +167,19 @@ column6{end} = '-';
 
 table2 = table(column1, column2, column3, columns4{:}, column5, column6, 'VariableNames', [{'Galaxy Name', 'Number of datapoints', 'Quality Flag'}, fitNames_, {'\rho_0 [eV/cm^3]', 'R_S [kpc]'}]);
 
-writetable(table2,'output/MONDFits_galaxies.csv');
+writetable(table2,'Output/fits_galaxy_details.csv');
 
 %--------------------------------------------------------------------------
-% Export first plot (MSWD_vs_a0.png)
+% Export first plot (MONDfits_MSWD_vs_a0.png)
 %--------------------------------------------------------------------------
 
 plotChiSquaredVsA0_multipleIntFcts(intFctIds,galaxyFittingDataArray,false,[40,120]);
 
 set(gcf, 'Position',  [100, 100, 1000, 500])
-saveas(gcf,'output/MSWD_vs_a0.png');
+saveas(gcf,'Output/MONDfits_MSWD_vs_a0.png');
 
 %--------------------------------------------------------------------------
-% Export second plot (MSWD_histogram.png)
+% Export second plot (fits_histogram.png)
 %--------------------------------------------------------------------------
 
 figure
@@ -198,7 +198,7 @@ for ii = 1:numOfFits
 end
 
 set(gcf, 'Position',  [100, 100, 1500, 750])
-saveas(gcf,'output/MONDFits_MSWD_histogram.png');
+saveas(gcf,'Output/fits_histogram.png');
 
 %--------------------------------------------------------------------------
 % Export third plot (intFcts.png)
@@ -207,7 +207,7 @@ saveas(gcf,'output/MONDFits_MSWD_histogram.png');
 plotInterpolationFunctions;
 
 set(gcf, 'Position',  [100, 100, 500, 400])
-saveas(gcf,'output/intFcts.png');
+saveas(gcf,'Output/intFcts.png');
 
 %--------------------------------------------------------------------------
 % Export plots for single galaxies (GALAXYNAME_v_vs_r.png)
@@ -229,7 +229,7 @@ for galaxyName_ = galaxyNamesForPlot
     plotGalaxyRotationCurveWithFits(galaxyName, 0.5, 0.7, mondFits, nfwFits, false, false);
 
     set(gcf, 'Position',  [100, 100, 1000, 750])
-    saveas(gcf,sprintf('output/%s_v_vs_r.png', galaxyName));
+    saveas(gcf,sprintf('Output/%s_v_vs_r.png', galaxyName));
 end
 
 fprintf('\n');

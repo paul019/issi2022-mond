@@ -2,7 +2,7 @@ function animateRotationCurve(galaxyName,intFctId,a0,numOfFrames)
 
 fprintf('\n');
 
-path = sprintf('output/anim_%s', galaxyName);
+path = sprintf('Output/anim_%s', galaxyName);
 
 % Create output folder:
 if not(isfolder(path))

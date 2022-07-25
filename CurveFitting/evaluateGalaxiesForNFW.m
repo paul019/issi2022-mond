@@ -56,6 +56,7 @@ for ii = 1:numOfGalaxies
     totalNumberOfDatapoints = totalNumberOfDatapoints + length(galaxyFittingData{ii}.rotationCurveData);
 
     galaxyFittingData{ii}.typeOfFit = 'NFW';
+    galaxyFittingData{ii}.name = galaxyNames{jj};
 end
 
 % Print status update:
@@ -125,6 +126,9 @@ end
 % The last entry in the cell array "galaxies" represents the average of all
 % galaxies:
 jj = numOfGalaxies + 1;
+
+galaxyFittingData{jj}.typeOfFit = 'MOND';
+galaxyFittingData{jj}.name = 'All galaxies';
 
 % Calculate the degrees of freedom:
 galaxyFittingData{jj}.degreesOfFreedom = totalNumberOfDatapoints - 2 * numOfGalaxies - 1;

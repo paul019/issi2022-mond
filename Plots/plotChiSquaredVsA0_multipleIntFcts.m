@@ -4,7 +4,7 @@ if nargin < 3
     easyUnitsFlag = false;
 end
 
-figure('NumberTitle', 'off', 'Name', 'MOND fit');
+figure;
 
 legendText = cell(length(intFctIds),1);
 
