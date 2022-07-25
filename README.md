@@ -70,6 +70,8 @@ Additional to these outputs, the function also writes `png` and `csv` files to t
 
 `exportFits;`
 
+ ***
+
 ### `animateRotationCurve`
 
 #### What this function does:
