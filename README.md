@@ -89,8 +89,6 @@ None. The function creates a folder with the path `Output/anim_GALAXYNAME` and s
 
 `animateRotationCurve('NGC6503','rar',1.2e-13,20);`
 
-***
-
 ## Credits
 
 This project was done by Andrés, Christian, Shashank, Nimrod, Paul, Aamod, and Yin Lam. Thanks to Abishek for mentoring us throughout the program!
