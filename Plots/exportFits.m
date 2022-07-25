@@ -26,7 +26,7 @@ numOfGalaxies = length(galaxyNames);
 
 % Array of galaxies to be plotted:
 if nargin < 1
-    galaxyNamesForPlot = {'UGC01281','NGC6503','NGC5055'};
+    galaxyNamesForPlot = {'UGC01281','NGC6503','NGC5055','NGC2366'};
 end
 
 % Array of interpolation functions and fits to be used:
@@ -105,7 +105,8 @@ for ii = 1:numOfFits
 end
 
 column1 = fitNames;
-column2 = bestA0;
+column2 = arrayfun(@(x) num2str(x), bestA0,'UniformOutput',false);
+column2{end} = '-';
 column3 = chiSquaredReduced(:,numOfGalaxies + 1);
 column4 = numOfGalaxiesWithGoodFit;
 
@@ -145,7 +146,7 @@ end
 numberOfDatapoints(end) = galaxyFittingDataArray{1}{end}.numberOfDatapoints;
 
 % Sort the galaxies by chi squared reduced for the simple fit if possible:
-[~, order] = sort(chiSquaredReduced(min(3,numOfFits),1:numOfGalaxies));
+[~, order] = sort(chiSquaredReduced(min(5,numOfFits),1:numOfGalaxies));
 order(numOfGalaxies + 1) = numOfGalaxies + 1;
 column1 = galaxyNames_(order);
 column2 = numberOfDatapoints(order);
@@ -161,13 +162,6 @@ column5{end} = '-';
 column6 = R_S_kpc(order);
 column6 = arrayfun(@(x) num2str(x), column6,'UniformOutput',false);
 column6{end} = '-';
-
-disp(size(column1));
-disp(size(column2));
-disp(size(column3));
-disp(size(columns4{2}));
-disp(size(column5));
-disp(size(column6));
 
 % Create and save table:
 
