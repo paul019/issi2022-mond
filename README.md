@@ -84,12 +84,16 @@ This function returns an animation that shows how the expected Newtonian velocit
 | ---- | --------- | ---- | ------- |
 | `galaxyName` | no | string | The galaxy for which the animation is created. |
 | `intFctId` | no | string | The interpoaltion function which is used for the animation. |
-| `a0` | no | floating point number | The a<sub>0</sub> value which is used for the animation. |
+| `a0` | no | floating point number | The a<sub>0</sub> value which is used for the animation (in km/s<sup>2</sup>). |
 | `numOfFrames` | no | integer | The number of animation frames. |
 
 #### Output arguments:
 
 None. The function creates a folder with the path `Output/anim_GALAXYNAME` and saves one `png` file for every animation frame in there.
+
+#### Example usage:
+
+`animateRotationCurve('NGC6503','rar',1.2e-13,20);`
 
 ***
 
