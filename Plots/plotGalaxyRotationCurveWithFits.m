@@ -1,4 +1,4 @@
-function plotGalaxyVelocityWithFits(name, MtoLdisk, MtoLbulge, mondFits, nfwFits, accelerationsFlag, subVelocitiesFlag)
+function plotGalaxyRotationCurveWithFits(name, MtoLdisk, MtoLbulge, mondFits, nfwFits, accelerationsFlag, subVelocitiesFlag, standaloneflag)
 % name:         name of the galaxy                  'UGC01281'
 % MtoLdisk:     Mass to Light ratio of the disk     0.5
 % MtoLbulge:    Mass to Light ratio of the bulge    0.7
@@ -21,6 +21,10 @@ if nargin < 7
     subVelocitiesFlag = true;
 end
 
+if nargin < 8
+    standaloneflag = true;
+end
+
 % Get rotation curve data:
 rotationCurveData = ReadRotmodLTGSingle(name);
 
@@ -38,7 +42,7 @@ if subVelocitiesFlag
     velocityLegendArray{end + 1} = 'Gas velocity';
     velocityLegendArray{end + 1} = strcat('Disk velocity (\Upsilon=',num2str(MtoLdisk),')');
 end
-accelerationLegendArray = { 'Observed acceleration', 'Expected Newtonian acceleration' };
+accelerationLegendArray = { 'Observed acceleration', 'Expected Newtonian acceleration a_{Newt,bar}' };
 
 % If there are no bulge velocities, set bulgeFlag to false:
 if max(Vbulge)==0
@@ -51,7 +55,7 @@ else
 end
 
 % Add entry to velocityLegendArray:
-velocityLegendArray{end + 1} = 'Expected Newtonian velocity';
+velocityLegendArray{end + 1} = 'Expected Newtonian velocity v_{Newt,bar}';
 
 % Calculate the baryonic velocity (in km/s):
 Vbaryon = sqrt(abs(Vgas).*Vgas+MtoLdisk*abs(Vdisk).*Vdisk+bulgeFlag*MtoLbulge*abs(Vbulge).*Vbulge);
@@ -115,14 +119,14 @@ for ii = 1:numOfNFWFits
     [Vnfw_r{ii}, Vnfw{ii}] = calculateNFWVelocitiesForGalaxy(rotationCurveData,p0,R_S);     % in km/s
     Anfw{ii} = Vnfw{ii}.^2 ./ (Vnfw_r{ii});  % in km/s2
 
-    legendName = sprintf('NFW fit (%s)', intFctName);
+    legendName = 'NFW fit';
 
     if numOfNFWFits > 1
         legendName = [legendName, sprintf(' #%d', ii)];
     end
 
     if isfield(nfwFits{ii}, 'chiSquaredReduced')
-        legendName = [legendName, sprintf(' (\\chi_v^2 = %.2f)', mondFits{ii}.chiSquaredReduced)];
+        legendName = [legendName, sprintf(' (\\chi_v^2 = %.2f)', nfwFits{ii}.chiSquaredReduced)];
     end
 
     velocityLegendArray{end + 1} = legendName;
@@ -132,7 +136,9 @@ end
 %--------------------------------------------------------------------------
 % Prepare figure:
 
-figure
+if standaloneflag
+    figure
+end
 
 %--------------------------------------------------------------------------
 % Subplot 1 (velocities):
@@ -149,12 +155,15 @@ if subVelocitiesFlag
         scatter(r,sqrt(MtoLbulge)*Vbulge)
     end
 end
-plot(r,Vbaryon,'--','linewidth',2)
+p = plot(r,Vbaryon,':','linewidth',2);
+p.Color = '#000075';
 for ii = 1:numOfMONDFits
-    plot(Vmond_r{ii}/kpcInKm,Vmond{ii},'--','linewidth',2)
+    p = plot(Vmond_r{ii}/kpcInKm,Vmond{ii},'--','linewidth',2);
+    p.Color = getInterpolationFunctionColor(mondFits{ii}.intFctId);
 end
 for ii = 1:numOfNFWFits
-    plot(Vnfw_r{ii}/kpcInKm,Vnfw{ii},'--','linewidth',2)
+    p = plot(Vnfw_r{ii}/kpcInKm,Vnfw{ii},'-.','linewidth',2);
+    p.Color = '#800000';
 end
 
 title(strcat(name));            
@@ -165,7 +174,7 @@ set(gca,'FontSize',15);
 %text(1,'FontSize',18);
 xlabel 'r [kpc]';
 ylabel 'v [km/s]';
-axis([0 1.05*max(r) min(Vgas) 1.2*max([max(Vobs),max(Vbaryon)])])
+axis([0 1.05*max(r) 0 1.05*max([max(Vobs),max(Vbaryon),max(cell2mat(Vmond)),max(cell2mat(Vnfw))])])
 
 %--------------------------------------------------------------------------
 % Subplot 2 (accelerations):
@@ -174,12 +183,15 @@ if accelerationsFlag
     subplot(2,1,2)
     hold on;
     errorbar(r,Aobs,Aobserr,'.')
-    plot(r,Aexpected,'--','linewidth',2)
+    p = plot(r,Aexpected,':','linewidth',2);
+    p.Color = '#000075';
     for ii = 1:numOfMONDFits
-        plot(Vmond_r{ii}/kpcInKm,Amond{ii},'--','linewidth',2)
+        p = plot(Vmond_r{ii}/kpcInKm,Amond{ii},'--','linewidth',2);
+        p.Color = getInterpolationFunctionColor(mondFits{ii}.intFctId);
     end
     for ii = 1:numOfNFWFits
-        plot(Vnfw_r{ii}/kpcInKm,Anfw{ii},'--','linewidth',2)
+        p = plot(Vnfw_r{ii}/kpcInKm,Anfw{ii},'-.','linewidth',2);
+        p.Color = '#800000';
     end
     
     subplot(2,1,2);
@@ -188,7 +200,7 @@ if accelerationsFlag
     set(gca,'FontSize',15);
     xlabel 'r [kpc]';
     ylabel 'a [km/s^2]';
-    axis([0 1.05*max(r) min([min(Aobs),min(Aexpected)]) 1.5*max([max(Aobs),max(Aexpected)])])
+    axis([0 1.05*max(r) 0 1.05*max([max(Aobs),max(Aexpected),max(cell2mat(Amond)),max(cell2mat(Anfw))])])
 end
 
 end

@@ -36,6 +36,7 @@ galaxyMetadata = cell(numOfGalaxies, 1);
 for ii = 1:numOfGalaxies
     galaxyMetadata{ii}.name = galaxyNames{ii};
     galaxyMetadata{ii}.hubbleType = galaxyData{ii}(1);
+    galaxyMetadata{ii}.qualityFlag = galaxyData{ii}(17);
 end
 
 end

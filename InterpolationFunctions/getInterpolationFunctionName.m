@@ -23,7 +23,7 @@ switch id
         name = 'Toy';
 
     case 'exp'
-        name = '''Exponential''';
+        name = 'Exponential';
 
     otherwise
         name = '';

@@ -167,6 +167,10 @@ for jj = 1:numOfGalaxies
     % Save galaxy data as human-readable string:
     galaxyFittingData{jj}.dataString = sprintf('%s: chi_v^2 = %d', galaxyNames{jj}, galaxyFittingData{jj}.chiSquaredReduced_general);
 
+    % Save galaxy data as mond fit (input to
+    % "plotGalaxyRotationCurveWithFits"):
+    galaxyFittingData{jj}.mondFit = struct('intFctId',interpolationFunctionId,'a0',bestA0Overall,'chiSquaredReduced',galaxyFittingData{jj}.chiSquaredReduced_general);
+
     % Print galaxy data to console:
     if printflag
         fprintf('%s\n', galaxyFittingData{jj}.dataString);

@@ -114,6 +114,10 @@ for jj = 1:numOfGalaxies
 
     % Save galaxy data as human-readable string:
     galaxyFittingData{jj}.dataString = sprintf('%s: p_0 = %d kg/km^3; R_S = %d km; chi_v^2 = %d', galaxyNames{jj}, galaxyFittingData{jj}.bestP0, galaxyFittingData{jj}.bestR_S, galaxyFittingData{jj}.chiSquaredReduced);
+
+    % Save galaxy data as nfw fit (input to
+    % "plotGalaxyRotationCurveWithFits"):
+    galaxyFittingData{jj}.nfwFit = struct('p0',params_best(1),'R_S',params_best(2),'chiSquaredReduced',galaxyFittingData{jj}.chiSquaredReduced_general);
 end
 
 %--------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-function [fitIds,galaxyFittingDataArray] = exportFits
+function [fitIds,galaxyFittingDataArray] = exportFits(galaxyNamesForPlot, intFctIds, minQuality)
 
 %--------------------------------------------------------------------------
 % Preparations:
@@ -6,22 +6,34 @@ function [fitIds,galaxyFittingDataArray] = exportFits
 
 fprintf('\n');
 
+% Create output folder:
+if not(isfolder('output'))
+   mkdir('output')
+end
+
 % Define constants:
-a0Step = 0.1e-13;       % in km/s^2
+a0Step = 0.01e-13;       % in km/s^2
 a0Min  = a0Step;         % in km/s^2
 a0Max  = 2.5e-13;        % in km/s^2
-minQuality = 3;
+if nargin < 3
+    minQuality = 3;
+end
 
 % Array of galaxies to be used:
 galaxyNames = getGalaxiesByQuality(minQuality);
+[~, galaxyMetadata] = getGalaxyMetadata(galaxyNames);
 numOfGalaxies = length(galaxyNames);
 
 % Array of galaxies to be plotted:
-galaxyNamesForPlot = {'UGC01281','NGC0024','NGC5055'};
+if nargin < 1
+    galaxyNamesForPlot = {'UGC01281','NGC6503','NGC5055'};
+end
 
 % Array of interpolation functions and fits to be used:
-%intFctIds = { 'linear'; 'rar'; 'simple'; 'standard'; 'toy'; 'exp' };
-intFctIds = { 'linear'; 'rar'; 'simple'; 'standard' };
+if nargin < 2
+    intFctIds = getAllInterpolationFunctionIds;
+end
+%intFctIds = { 'linear'; 'rar'; 'simple'; 'standard' };
 fitIds = [intFctIds; {'nfw'}];
 
 numOfIntFcts = length(intFctIds);
@@ -132,21 +144,34 @@ for ii = 1:numOfGalaxies
 end
 numberOfDatapoints(end) = galaxyFittingDataArray{1}{end}.numberOfDatapoints;
 
-% Sort the galaxies by chi squared reduced for the simple fit:
-[~, order] = sort(chiSquaredReduced(3,1:numOfGalaxies));
+% Sort the galaxies by chi squared reduced for the simple fit if possible:
+[~, order] = sort(chiSquaredReduced(min(3,numOfFits),1:numOfGalaxies));
 order(numOfGalaxies + 1) = numOfGalaxies + 1;
 column1 = galaxyNames_(order);
 column2 = numberOfDatapoints(order);
-columns3 = cell(numOfFits,1);
+column3 = [cellfun(@(x) num2str(x.qualityFlag), galaxyMetadata); '-'];
+column3 = column3(order);
+columns4 = cell(numOfFits,1);
 for ii = 1:numOfFits
-    columns3{ii} = chiSquaredReduced_{ii}(order);
+    columns4{ii} = chiSquaredReduced_{ii}(order);
 end
-column4 = p0_eV(order);
-column5 = R_S_kpc(order);
+column5 = p0_eV(order);
+column5 = arrayfun(@(x) num2str(x), column5,'UniformOutput',false);
+column5{end} = '-';
+column6 = R_S_kpc(order);
+column6 = arrayfun(@(x) num2str(x), column6,'UniformOutput',false);
+column6{end} = '-';
+
+disp(size(column1));
+disp(size(column2));
+disp(size(column3));
+disp(size(columns4{2}));
+disp(size(column5));
+disp(size(column6));
 
 % Create and save table:
 
-table2 = table(column1, column2, columns3{:}, column4, column5, 'VariableNames', [{'Galaxy Name', 'Number of datapoints'}, fitNames_, {'\rho_0 [eV/cm^3]', 'R_S [kpc]'}]);
+table2 = table(column1, column2, column3, columns4{:}, column5, column6, 'VariableNames', [{'Galaxy Name', 'Number of datapoints', 'Quality Flag'}, fitNames_, {'\rho_0 [eV/cm^3]', 'R_S [kpc]'}]);
 
 writetable(table2,'output/MONDFits_galaxies.csv');
 
@@ -154,9 +179,9 @@ writetable(table2,'output/MONDFits_galaxies.csv');
 % Export first plot (MSWD_vs_a0.png)
 %--------------------------------------------------------------------------
 
-plotChiSquaredVsA0_multipleIntFcts(intFctIds,galaxyFittingDataArray);
+plotChiSquaredVsA0_multipleIntFcts(intFctIds,galaxyFittingDataArray,false,[40,120]);
 
-set(gcf, 'Position',  [100, 100, 1000, 750])
+set(gcf, 'Position',  [100, 100, 1000, 500])
 saveas(gcf,'output/MSWD_vs_a0.png');
 
 %--------------------------------------------------------------------------
@@ -185,30 +210,9 @@ saveas(gcf,'output/MONDFits_MSWD_histogram.png');
 % Export third plot (intFcts.png)
 %--------------------------------------------------------------------------
 
-x = 0:0.1:10;
-y = zeros(numOfIntFcts, length(x));
+plotInterpolationFunctions;
 
-for ii = 1:numOfIntFcts
-    intFct = getInterpolationFunction(intFctIds{ii});
-    y(ii, :) = intFct(x);
-end
-
-figure
-
-for ii = 1:numOfIntFcts
-    plot(x,y(ii,:));
-    hold on
-end
-
-title('Interpolation functions');            
-legend(fitNames(1:end-1), 'Location', 'SouthEast');
-grid on;
-set(gca,'FontSize',15);
-xlabel 'x';
-ylabel '\mu(x)';
-axis([0 10 0 1.1]);
-
-set(gcf, 'Position',  [100, 100, 750, 500])
+set(gcf, 'Position',  [100, 100, 500, 400])
 saveas(gcf,'output/intFcts.png');
 
 %--------------------------------------------------------------------------
@@ -222,13 +226,13 @@ for galaxyName_ = galaxyNamesForPlot
     % Prepare MOND fits:
     mondFits = cell(numOfIntFcts,1);
     for ii = 1:numOfIntFcts
-        mondFits{ii} = struct('intFctId',intFctIds{ii},'a0',galaxyFittingDataArray{ii}{end}.bestA0,'chiSquaredReduced',galaxyFittingDataArray{ii}{galaxyIndex}.chiSquaredReduced_general);
+        mondFits{ii} = galaxyFittingDataArray{ii}{galaxyIndex}.mondFit;
     end
 
     % Prepare NFW fit:
-    nfwFits = {struct('p0',p0(galaxyIndex),'R_S',R_S(galaxyIndex),'chiSquaredReduced',galaxyFittingDataArray{end}{galaxyIndex}.chiSquaredReduced_general)};
+    nfwFits = {galaxyFittingDataArray{end}{galaxyIndex}.nfwFit};
 
-    plotGalaxyVelocityWithFits(galaxyName, 0.5, 0.7, mondFits, nfwFits, false, false);
+    plotGalaxyRotationCurveWithFits(galaxyName, 0.5, 0.7, mondFits, nfwFits, false, false);
 
     set(gcf, 'Position',  [100, 100, 1000, 750])
     saveas(gcf,sprintf('output/%s_v_vs_r.png', galaxyName));
