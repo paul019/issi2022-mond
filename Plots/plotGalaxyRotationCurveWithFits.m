@@ -11,7 +11,7 @@ function plotGalaxyRotationCurveWithFits(name, MtoLdisk, MtoLbulge, mondFits, nf
 % -> R_S:       the parameter R_S (in km)
 % -> chiSquaredReduced: the MSWD per degree of freedom (OPTIONAL)
 
-% plotGalaxyVelocityWithFits('UGC01281',0.5,0.7,{struct('intFctId','rar','a0',1.2e-13)},{struct('p0',3e-23,'R_S',6e16)});
+% plotGalaxyRotationCurveWithFits('UGC01281',0.5,0.7,{struct('intFctId','rar','a0',1.2e-13)},{struct('p0',3e-23,'R_S',6e16)});
 
 if nargin < 6
     accelerationsFlag = true;
